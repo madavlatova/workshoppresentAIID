@@ -1,0 +1,664 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Практикум мастер-класса «Алхимия обучения»: проектируем курс по модели 4C/ID с помощью нейросети. Разработчик страницы – Давлатова Мадина Асатуллоевна.">
+<meta name="theme-color" content="#102D69">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Практикум 4C/ID с нейросетью</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: фирменный стиль ВШЭ – темно-синяя шапка с орнаментом, белые карточки на светло-голубом фоне; липкая панель прогресса и таймера команды */
+:root{
+  --navy:#102D69; --blue:#1658DA; --blue2:#234A9B; --sky:#CDDDF0; --mist:#EEF3FA; --white:#FFFFFF;
+  --ink:#102D69; --text:#1C2740; --muted:#55607A; --line:#D6DFEE; --paper:#FFFFFF; --bg:#F2F5FA;
+  --ok:#1E8E5A; --okbg:#E5F4EC; --warn:#EB681F; --badbg:#FBE9E4;
+  --f:"HSE Sans","Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --ink:#DCE6FA; --text:#E4E9F3; --muted:#A5B0C8; --line:#2A3A62; --paper:#14213F; --bg:#0C1630; --mist:#1A2A4E; --sky:#2A3E6E;
+  --blue:#6E9BFF; --blue2:#9DB8F0; --okbg:#173A2B; --badbg:#3E2320; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --ink:#DCE6FA; --text:#E4E9F3; --muted:#A5B0C8; --line:#2A3A62; --paper:#14213F; --bg:#0C1630; --mist:#1A2A4E; --sky:#2A3E6E;
+  --blue:#6E9BFF; --blue2:#9DB8F0; --okbg:#173A2B; --badbg:#3E2320; color-scheme:dark }
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:calc(112px + env(safe-area-inset-top,0px))}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{background:var(--bg);color:var(--text);font-family:var(--f);font-size:16px;line-height:1.55;-webkit-text-size-adjust:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:#102D69}
+.wrap{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{margin:0;text-wrap:balance}
+h2{font-size:1.5rem;font-weight:700;line-height:1.2;color:var(--ink)}
+h3{font-size:1.1rem;font-weight:700;color:var(--ink)}
+p{margin:0}
+a{color:var(--blue)}
+.eyebrow{font-size:.74rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--blue)}
+.muted{color:var(--muted)}
+section{padding-top:36px;display:flex;flex-direction:column;gap:14px}
+a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
+
+/* Brand header */
+.brand{background:#102D69;color:#fff;position:relative;overflow:hidden}
+.brand .pat{position:absolute;top:0;right:-10px;bottom:0;width:92px;background-repeat:repeat-y;background-size:92px auto;opacity:.95}
+.brand .wrap{padding-block:20px 30px;position:relative;display:flex;flex-direction:column;gap:18px;padding-right:max(110px,env(safe-area-inset-right,0px))}
+.lockup{display:flex;align-items:center;gap:12px;font-size:.92rem;line-height:1.25;color:#DCE6FA}
+.lockup img{width:44px;height:44px;flex:none}
+.lockup .bar{width:1px;align-self:stretch;background:rgba(255,255,255,.35)}
+.brand h1{font-size:clamp(1.65rem,7vw,2.5rem);line-height:1.1;font-weight:700;color:#fff}
+.brand .kicker{font-size:.95rem;color:#BFD0F2}
+.brand .lead{font-size:1rem;color:#DCE6FA;max-width:56ch}
+.hosts{display:grid;gap:10px;font-size:.86rem;color:#BFD0F2}
+.hosts b{color:#fff;font-weight:600;display:block}
+
+/* Sticky progress + team timer */
+.dock{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--paper);border-bottom:1px solid var(--line);box-shadow:0 2px 10px rgba(16,45,105,.06)}
+.dock .wrap{padding-block:8px;display:flex;flex-direction:column;gap:8px}
+.dockrow{display:flex;align-items:center;gap:10px}
+.prog{flex:1;min-width:0}
+.prog .lbl{font-size:.78rem;color:var(--muted);display:flex;justify-content:space-between;gap:8px}
+.prog .lbl b{color:var(--ink)}
+.prog .track{height:8px;border-radius:5px;background:var(--mist);overflow:hidden;margin-top:4px}
+.prog .track i{display:block;height:100%;width:0;background:var(--blue);transition:width .4s}
+.mini{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:10px;background:#102D69;color:#fff;font-weight:700;font-size:.9rem;font-family:var(--mono);min-height:40px;font-variant-numeric:tabular-nums}
+.mini.run{background:var(--blue)}
+.mini.low{background:var(--warn)}
+.nav{display:flex;overflow-x:auto;gap:6px;scrollbar-width:none;margin:0 calc(-1*max(16px,env(safe-area-inset-left,0px)));padding:0 max(16px,env(safe-area-inset-left,0px))}
+.nav::-webkit-scrollbar{display:none}
+.nav a{flex:none;text-decoration:none;color:var(--ink);font-weight:600;font-size:.82rem;padding:6px 11px;border-radius:999px;border:1px solid var(--line);background:var(--paper);display:flex;gap:5px;align-items:center}
+.nav a.done{background:var(--okbg);border-color:transparent}
+.nav a.done::before{content:"✓";color:var(--ok);font-weight:800}
+
+/* Cards */
+.card{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.task{background:linear-gradient(135deg,#102D69,#1B3F8A);color:#fff;border:0}
+.task .eyebrow{color:#BFD0F2}
+.task h2{color:#fff;font-size:1.3rem}
+.task dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:.92rem}
+.task dt{color:#BFD0F2;font-weight:600}
+.task dd{margin:0;min-width:0}
+.how{display:grid;gap:10px;padding:0;margin:0;counter-reset:s}
+.how li{list-style:none;display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:start}
+.how li::before{counter-increment:s;content:counter(s);width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:#102D69;color:#fff;font-weight:700;font-size:.85rem}
+
+/* Team setup */
+.setup .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field label{font-size:.82rem;font-weight:600;color:var(--muted)}
+input[type=number],input[type=text],textarea{font:inherit;font-size:16px;color:var(--text);background:var(--paper);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+textarea{min-height:84px;resize:vertical}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{all:unset;box-sizing:border-box;cursor:pointer;padding:9px 14px;border-radius:999px;border:1.5px solid var(--line);font-weight:600;font-size:.9rem;color:var(--ink);background:var(--paper);min-height:40px;display:inline-flex;align-items:center}
+.chip[aria-pressed="true"]{background:#102D69;color:#fff;border-color:#102D69}
+.openai{display:none;font-size:.9rem}
+.openai.on{display:block}
+
+/* Roles */
+.roles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+.role{all:unset;box-sizing:border-box;cursor:pointer;background:var(--paper);border-radius:12px;padding:12px 14px;border:1.5px solid var(--line);display:flex;flex-direction:column;gap:4px;min-width:0}
+.role b{font-size:.98rem;color:var(--ink)}
+.role p{font-size:.86rem;color:var(--muted)}
+.role[aria-pressed="true"]{border-color:var(--blue);background:var(--mist)}
+.role .me{display:none;font-size:.72rem;font-weight:700;color:var(--blue);letter-spacing:.06em;text-transform:uppercase}
+.role[aria-pressed="true"] .me{display:block}
+
+/* Steps */
+.step{background:var(--paper);border-radius:16px;border:1px solid var(--line);overflow:hidden}
+.step>header{padding:14px 16px 12px;display:flex;gap:12px;align-items:flex-start;border-bottom:1px solid var(--line)}
+.step .num{flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--c);color:#fff;font-weight:700}
+.step .comp{font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--blue2)}
+.step h3{font-size:1.2rem;line-height:1.25;margin-top:2px}
+.step .body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:12px}
+.step.done>header{background:var(--okbg)}
+.step.done .num{background:var(--ok)}
+.who{font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.prompt{border-radius:12px;border:1.5px solid var(--line);background:var(--bg);overflow:hidden}
+.prompt pre{margin:0;padding:12px;font-family:var(--mono);font-size:.78rem;line-height:1.55;white-space:pre-wrap;word-break:break-word;max-height:220px;overflow:auto;color:var(--text)}
+.prompt.open pre{max-height:none}
+.prompt .bar{display:flex;gap:8px;padding:8px;border-top:1px solid var(--line);background:var(--paper);flex-wrap:wrap}
+.btn{all:unset;box-sizing:border-box;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;font-weight:700;font-size:.92rem;padding:11px 14px;border-radius:10px;background:#102D69;color:#fff;min-height:44px;text-align:center}
+:root[data-theme="dark"] .btn{background:#2B55B5}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .btn{background:#2B55B5} }
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+.btn.grow{flex:1 1 160px}
+.btn.done{background:var(--ok)}
+.btn.okbtn{background:transparent;color:var(--ok);border:1.5px solid var(--ok)}
+.step.done .btn.okbtn{background:var(--ok);color:#fff}
+.check{margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.check li{list-style:none;display:grid;grid-template-columns:22px 1fr;gap:8px;font-size:.9rem}
+.check input{width:20px;height:20px;margin:2px 0 0;accent-color:var(--blue)}
+details.more{border-radius:12px;background:var(--mist);padding:2px 12px}
+details.more summary{cursor:pointer;font-weight:700;padding:10px 0;font-size:.92rem;list-style:none;display:flex;justify-content:space-between;gap:8px;color:var(--ink)}
+details.more summary::-webkit-details-marker{display:none}
+details.more summary::after{content:"+";font-weight:800}
+details.more[open] summary::after{content:"–"}
+details.more .inner{padding-bottom:12px;display:flex;flex-direction:column;gap:10px;font-size:.9rem}
+details.more ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.errlog{display:flex;flex-direction:column;gap:6px}
+.errlog label{font-size:.82rem;font-weight:600;color:var(--muted)}
+.errlog textarea.big{min-height:220px;max-height:70vh;overflow:auto;font-size:15px;line-height:1.5}
+
+/* Reference, model, fixes, literature */
+.ref ul,.lit ol{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;font-size:.92rem}
+.model{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.model .m{border-radius:12px;padding:12px;background:var(--paper);border:1px solid var(--line);display:flex;flex-direction:column;gap:6px;min-width:0}
+.model .m .n{font-weight:700;font-size:.78rem;color:var(--blue)}
+.model .m b{font-size:.94rem;line-height:1.25;color:var(--ink)}
+.model .m p{font-size:.84rem;color:var(--muted);line-height:1.4}
+@media (max-width:380px){.model{grid-template-columns:1fr}}
+.quiz{display:flex;flex-direction:column;gap:8px}
+.qi{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:.92rem}
+.qi .opts{display:flex;gap:8px;flex-wrap:wrap}
+.qi .opts button{all:unset;box-sizing:border-box;cursor:pointer;padding:8px 12px;border-radius:9px;border:1.5px solid var(--line);font-weight:600;font-size:.84rem;color:var(--ink);min-height:38px}
+.qi.ok{background:var(--okbg);border-color:transparent}
+.qi.no{background:var(--badbg);border-color:transparent}
+.qi .fb{font-size:.84rem;font-weight:700}
+.qi.ok .fb{color:var(--ok)}
+.qi.no .fb{color:var(--warn)}
+.fix{display:flex;flex-direction:column;gap:8px}
+.fix .row{display:grid;gap:6px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px}
+.fix .row b{font-size:.9rem;color:var(--ink)}
+.fix .row code{font-family:var(--mono);font-size:.8rem;background:var(--bg);padding:8px 10px;border-radius:8px;display:block;white-space:pre-wrap}
+.lit li b{color:var(--ink)}
+.lit .why{display:block;color:var(--muted);font-size:.85rem;margin-top:2px}
+.mods{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:.92rem}
+
+footer{margin-top:40px;background:#102D69;color:#DCE6FA}
+footer .wrap{padding-block:24px 36px;display:flex;flex-direction:column;gap:12px;font-size:.86rem}
+footer b{color:#fff}
+footer .lockup{color:#DCE6FA}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(160%);visibility:hidden;background:#102D69;color:#fff;font-weight:700;padding:12px 18px;border-radius:999px;transition:transform .25s,visibility .25s;z-index:20;font-size:.9rem;width:max-content;max-width:calc(100% - 32px);text-align:center}
+.toast.show{transform:translateX(-50%) translateY(0);visibility:visible}
+
+#timer-view{min-height:100%;display:flex;flex-direction:column;gap:24px;padding-block:32px;max-width:1100px;margin:0 auto;padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px))}
+.t-stage{font-weight:700;font-size:clamp(2rem,5.5vw,4rem);line-height:1.05;color:var(--ink)}
+.t-digits{font-family:var(--mono);font-weight:500;font-size:clamp(5rem,22vw,16rem);line-height:1;font-variant-numeric:tabular-nums;color:var(--ink)}
+.t-digits.over{color:var(--warn)}
+.t-presets,.t-ctrl{display:flex;flex-wrap:wrap;gap:8px}
+.t-presets .btn{background:var(--paper);color:var(--ink);border:1.5px solid var(--line)}
+.t-presets .btn[aria-pressed="true"]{background:#102D69;color:#fff;border-color:#102D69}
+.t-hint{font-size:clamp(1rem,2vw,1.4rem);color:var(--muted)}
+</style>
+
+</head>
+<body>
+<div id="main-view">
+<header class="brand">
+  <div class="pat" style="background-image:url(data:image/jpeg;base64,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)" aria-hidden="true"></div>
+  <div class="wrap">
+    <div class="lockup"><img src="data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjgzLjQ3IDI4My40NyIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgaWQ9IkxheWVyXzEiIHhtbDpzcGFjZT0icHJlc2VydmUiIG92ZXJmbG93PSJoaWRkZW4iPjxnPjxjaXJjbGUgY3g9IjE0MS43MyIgY3k9IjE0MS43NCIgcj0iMTQxLjczIiBmaWxsPSIjRkZGRkZGIi8+PGc+PHBhdGggZD0iTTEzNS41OSAxMzMuOTEgMTM1LjAyIDEzMy45MSAxMzUuMDIgMTIzLjI5IDEzNS44IDEyMy4yOUMxNDkuMjkgMTIzLjI5IDE1Ny40OSAxMTUuNTUgMTYxLjE4IDExMC45NSAxNjYuOTcgMTAzLjkxIDE2OC4xNSA5Ny4zOSAxNjguNDQgOTEuODlMMTM1LjI2IDkxLjg5IDEzNS4yNiA4MS40IDE2OC4xIDgxLjRDMTY3LjE0IDc1LjA2IDE2NC42OCA2OS4yNCAxNjEuMTMgNjQuOTUgMTU1LjQgNTcuODMgMTQ3LjA2IDU0LjIzIDEzNi4zMiA1NC4yM0wxMTguMSA1NC4yMiAxMTguMSAyMjMuMDMgMTM1LjI2IDIyMy4wMyAxMzUuMjYgMTU5LjYgMTYwLjI4IDE1OS42IDE2MC4yOCAyMjIuOTYgMTc5LjgzIDIyMi45NiAxNzkuODMgMTk0LjAyQzE3OS44NCAxNTMuMDEgMTY1Ljc4IDEzMy45MSAxMzUuNTkgMTMzLjkxWiIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik0xNjcuNTIgMTI4LjkyQzE3Ni4wMiAxMjUuMTIgMTgxLjI1IDExOS43IDE4NC44OSAxMTUuMzUgMTkzLjE5IDEwNS44NCAxOTQuOTMgOTUuMDUgMTk0LjkzIDg3LjY3IDE5NC45MyA4MS4yNyAxOTMuNDEgNjUuMTkgMTc5LjM2IDU0LjE4IDE3MC4zIDQ3LjE5IDE2Mi4xMyA0My42NCAxNDIuNTkgNDMuNjRMMTMyLjg2IDQzLjY0QzEzMi41NCA0My42MyAxMzIuMjUgNDMuNjMgMTMxLjg3IDQzLjYzTDkxLjA5IDQzLjYzIDkxLjA5IDIzNC41NiAyMDYuOTcgMjM0LjU2IDIwNi45NyAxOTcuNTdDMjA2Ljk3IDE2MC44NCAxOTQuNDMgMTM4Ljk4IDE2Ny41MiAxMjguOTJaTTE3OS44NCAyMjIuOTYgMTYwLjI5IDIyMi45NiAxNjAuMjkgMTU5LjYgMTM1LjI3IDE1OS42IDEzNS4yNyAyMjMuMDMgMTE4LjExIDIyMy4wMyAxMTguMTEgNTQuMjIgMTM2LjMzIDU0LjIzQzE0Ny4wNiA1NC4yMyAxNTUuNDEgNTcuODQgMTYxLjE0IDY0Ljk1IDE2NC42OSA2OS4yNCAxNjcuMTUgNzUuMDYgMTY4LjExIDgxLjRMMTM1LjI3IDgxLjQgMTM1LjI3IDkxLjg5IDE2OC40NSA5MS44OUMxNjguMTYgOTcuMzkgMTY2Ljk4IDEwMy45MSAxNjEuMTkgMTEwLjk1IDE1Ny41IDExNS41NiAxNDkuMyAxMjMuMjkgMTM1LjgxIDEyMy4yOUwxMzUuMDMgMTIzLjI5IDEzNS4wMyAxMzMuOTEgMTM1LjYgMTMzLjkxQzE2NS43OSAxMzMuOTEgMTc5Ljg1IDE1My4wMSAxNzkuODUgMTk0LjAyTDE3OS44NSAyMjIuOTZaIiBmaWxsPSIjMTAyRDY5Ii8+PC9nPjwvZz48L3N2Zz4=" alt="Логотип НИУ ВШЭ"><span class="bar"></span><span>Институт образования<br>Центр поддержки цифрового обучения</span></div>
+    <p class="kicker">Форум ДПО · иммерсивный мастер-класс</p>
+    <h1>«Алхимия обучения: сочетание классического педдизайна и нейросетей»</h1>
+    <p class="lead">Практикум: за 30 минут команда проектирует фрагмент курса по модели 4C/ID с помощью нейросети – от профессиональной задачи до заданий, информации для слушателей, тренировки и оценивания.</p>
+    <div class="hosts">
+      <div><b>Лытаева Мария Александровна</b>ученый секретарь НИУ ВШЭ, директор Центра поддержки цифрового обучения</div>
+      <div><b>Давлатова Мадина Асатуллоевна</b>доцент и зам. директора Департамента образовательных программ Института образования</div>
+    </div>
+  </div>
+</header>
+
+<div class="dock">
+  <div class="wrap">
+    <div class="dockrow">
+      <div class="prog"><div class="lbl"><span>Прогресс команды</span><b id="progtxt">0 из 7 шагов</b></div><div class="track"><i id="progbar"></i></div></div>
+      <button class="mini" id="mini" type="button" aria-label="Таймер команды">⏱ <span id="minit">30:00</span></button>
+    </div>
+    <nav class="nav" aria-label="Разделы" id="nav"></nav>
+  </div>
+</div>
+
+<main class="wrap">
+  <section id="task" style="padding-top:20px">
+    <div class="card task">
+      <p class="eyebrow">Задание для всех команд</p>
+      <h2>Курс «Атрибуция предметов художественной керамики при подготовке выставки»</h2>
+      <dl>
+        <dt>Формат</dt><dd>Модуль программы повышения квалификации, 16 академических часов, смешанный (2 очные встречи и онлайн-часы)</dd>
+        <dt>Кто учится</dt><dd>Художники, кураторы и организаторы выставок, сотрудники галерей и музеев без специальной подготовки в атрибуции</dd>
+        <dt>Зачем</dt><dd>На выставки попадают предметы из частных коллекций. Ошибка в атрибуции может негативно повлиять на репутацию выставки</dd>
+      </dl>
+    </div>
+    <ol class="how">
+      <li><span><b>Распределитесь по группам и ролям</b> – на это 1 минута. Нейросеть открыта на одном устройстве.</span></li>
+      <li><span><b>Ведите один чат</b> от шага 0 до шага 6: каждый промпт опирается на предыдущий ответ.</span></li>
+      <li><span><b>После каждого шага проверяйте</b> ответ и отмечайте шаг выполненным – прогресс виден наверху.</span></li>
+      <li><span><b>Соберите отчет</b> с найденными ошибками ИИ и загрузите его в Яндекс форму.</span></li>
+    </ol>
+  </section>
+
+  <section id="team">
+    <p class="eyebrow">Перед стартом</p>
+    <h2>Ваша команда</h2>
+    <div class="card setup">
+      <div class="row">
+        <div class="field" style="width:130px"><label for="teamno">Номер команды</label><input id="teamno" type="number" min="1" max="99" inputmode="numeric" placeholder="1"></div>
+        <button class="btn ghost" type="button" id="grp1">Таймер 1 минута на распределение</button>
+      </div>
+      <div class="field"><label>Нейросеть команды</label>
+        <div class="chips" id="ais" role="group" aria-label="Нейросеть"></div>
+      </div>
+      <p class="openai" id="openai"></p>
+      <p class="muted" style="font-size:.82rem">Номер команды и нейросеть автоматически попадут в отчет на шаге 6. Данные хранятся только в этом телефоне.</p>
+    </div>
+  </section>
+
+  <section id="roles">
+    <p class="eyebrow">Роли</p>
+    <h2>Пять ролей, одна нейросеть на команду</h2>
+    <p class="muted" style="font-size:.9rem">Нажмите на свою роль: под каждым шагом будет подсвечено, что делаете вы.</p>
+    <div class="roles" id="rolelist"></div>
+  </section>
+
+  <section id="route">
+    <p class="eyebrow">Маршрут · 30 минут</p>
+    <h2>Семь шагов в одном чате</h2>
+  </section>
+  <div id="steps"></div>
+
+  <section id="report">
+    <p class="eyebrow">Для ведущих</p>
+    <h2>Отчет команды</h2>
+    <p class="muted" style="font-size:.92rem">Отчет собирается сам из того, что команда отметила на странице: номер, нейросеть, выполненные шаги, чек-листы методиста, ошибки ИИ и результат мини-теста. В конце работы сохраните его файлом или скопируйте и загрузите в Яндекс форму по кнопке ниже.</p>
+    <div class="prompt"><pre id="report-pre" style="max-height:none"></pre><div class="bar"><button class="btn grow" type="button" data-copyreport="1">Скопировать отчет</button><button class="btn ghost grow" type="button" id="dl">Сохранить файлом</button></div></div>
+    <a class="btn" id="yform" style="text-decoration:none;background:#FC3F1D" href="#" target="_blank" rel="noopener">Яндекс форма для загрузки отчета работы группы</a>
+    <p class="muted" style="font-size:.82rem" id="dl-note">Файл содержит отчет, промпт отчета и все промпты практикума: их можно использовать для своего курса.</p>
+  </section>
+
+  <section id="facts">
+    <p class="eyebrow">Для проверяющего</p>
+    <h2>Справка по задаче</h2>
+    <div class="card ref">
+      <b>Профессиональные стандарты</b>
+      <ul>
+        <li>Отдельного профстандарта по атрибуции предметов искусства нет. Если нейросеть его называет, проверьте в <a href="https://profstandart.rosmintrud.ru/" target="_blank" rel="noopener">реестре профстандартов Минтруда</a>.</li>
+        <li>Ближе всего – «Хранитель музейных ценностей», код 04.003 (приказ Минтруда России от 04.08.2014 № 537н): функции D/01.6 «Ведение научно-исследовательской работы» и D/03.6 «Оформление заключений об историко-культурном значении культурных ценностей». <a href="https://ppt.ru/docs/profstandarts/view/529" target="_blank" rel="noopener">Источник</a></li>
+        <li>Смежный стандарт – «Специалист по учету музейных предметов», код 04.004 (приказ Минтруда России от 04.08.2014 № 521н). <a href="https://ppt.ru/docs/profstandarts/view/759" target="_blank" rel="noopener">Источник</a></li>
+        <li>Редакции 2014 года могли обновиться: актуальность сверяйте в реестре.</li>
+      </ul>
+      <b>Как атрибутируют керамику</b>
+      <ul>
+        <li>Признаки рассматривают в совокупности: материал и черепок, форма, техника и стиль декора, марка и другие знаки на донце, следы бытования и реставрации, документы о происхождении.</li>
+        <li>Марка не доказательство сама по себе. Предмет без марки не обязательно подделка: такие изделия выпускали, например, небольшие заводы. <a href="https://kirmuseum.org/sites/default/files/ebook/2017/4987_file.pdf" target="_blank" rel="noopener">Источник</a></li>
+        <li>Способ нанесения декора (подглазурная или надглазурная роспись, деколь) помогает датировке.</li>
+        <li>Вывод строят на сопоставлении с эталонами: музейными предметами, каталогами форм, справочниками марок. Аналоги из музеев России ищут в <a href="https://goskatalog.ru/" target="_blank" rel="noopener">Госкаталоге музейного фонда</a>.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="model">
+    <p class="eyebrow">Шпаргалка</p>
+    <h2>Модель 4C/ID</h2>
+    <p class="muted">Модель Йеруна ван Мерриенбура и Пола Киршнера: учим сложной профессиональной деятельности через задачи из профессиональной жизни, а не через набор разрозненных тем.</p>
+    <div class="model">
+      <div class="m"><span class="n">Компонент 1</span><b>Учебные задания</b><p>Задачи из реальной профессиональной жизни. От простых к сложным. Поддержка преподавателя снижается – самостоятельность растет.</p></div>
+      <div class="m"><span class="n">Компонент 2</span><b>Вспомогательная информация</b><p>Вспомогательная информация для сложных нерутинных задач: лонгрид, подход эксперта, разбор кейса. Дается до заданий.</p></div>
+      <div class="m"><span class="n">Компонент 3</span><b>Алгоритмы и инструкции</b><p>Пошаговые подсказки для рутинных задач, используются в момент выполнения: чек-лист, инструкция, шаблон.</p></div>
+      <div class="m"><span class="n">Компонент 4</span><b>Практика</b><p>Тренировка рутинных навыков до автоматизма. Нейросеть – тренажер с обратной связью.</p></div>
+    </div>
+    <h3 style="margin-top:8px">Проверь себя: какая это информация?</h3>
+    <div class="quiz" id="quiz"></div>
+  </section>
+
+  <section id="fix">
+    <p class="eyebrow">Если нейросеть отвечает не так</p>
+    <h2>Быстрые исправления</h2>
+    <div class="fix" id="fixes"></div>
+  </section>
+
+  <section id="lit">
+    <p class="eyebrow">Материалы практикума</p>
+    <h2>Полезная литература</h2>
+    <div class="card lit">
+      <ol>
+        <li><b>ван Мариенбор Й., Киршнер П.</b> Десять шагов комплексного обучения: четырехкомпонентная модель дизайна обучения. Астана: Zerde Publishing, 2023. 454 с. <a href="https://znanium.ru/catalog/document?id=442699" target="_blank" rel="noopener">Знаниум</a><span class="why">Первоисточник модели 4C/ID на русском языке (в переводе фамилия автора – ван Мариенбор).</span></li>
+        <li><b>Чернобай Е. В., Стремилова Е. К.</b> Педагогический дизайн. Книга теорий и практик обучения. М.: Издательский дом ВШЭ, 2026. 272 с. <a href="https://id.hse.ru/books/1195623142.html" target="_blank" rel="noopener">Издательский дом ВШЭ</a><span class="why">Теории обучения и практики педагогического дизайна в одной книге.</span></li>
+        <li><b>Чернобай Е. В., Лытаева М. А.</b> Кто такой педагогический дизайнер: компетентностный профиль и выбор модели подготовки // Вопросы образования. 2024. № 3. DOI: 10.17323/vo-2024-18126. <a href="https://vo.hse.ru/article/view/18126" target="_blank" rel="noopener">Статья</a><span class="why">Какие компетенции нужны педагогическому дизайнеру и как его готовить.</span></li>
+        <li><b>Педагогический дизайн: российская и зарубежная исследовательская повестка</b> / науч. ред. Е. В. Чернобай; Е. А. Ефимова, Ю. Н. Корешникова, М. А. Давлатова // Современная аналитика образования. 2022. № 3 (63). М.: НИУ ВШЭ. <a href="https://ioe.hse.ru/pubs/share/direct/593673038.pdf" target="_blank" rel="noopener">PDF</a><span class="why">Обзор исследований и практик педагогического дизайна в России и мире.</span></li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="take">
+    <p class="eyebrow">После мастер-класса</p>
+    <h2>Унести с собой</h2>
+    <p class="muted">Пять промптов для ваших курсов. Вставьте свои данные вместо квадратных скобок.</p>
+    <div style="display:flex;flex-direction:column;gap:10px" id="bonus"></div>
+    <div class="card">
+      <p class="eyebrow">Программа повышения квалификации</p>
+      <h3 style="font-size:1.25rem">Педагогический дизайн в ИИ-среде</h3>
+      <ol class="mods">
+        <li>Человек и ИИ: стратегии, методология и данные в дополнительном образовании</li>
+        <li>Человек в центре ИИ-трансформации: психологические, этические и лидерские аспекты ДПО</li>
+        <li>Образовательные результаты для критического использования ИИ</li>
+        <li>Лекции и семинары: как вовлечь и удержать студента</li>
+        <li>Оценивание с низкими и высокими ставками</li>
+        <li>Проектный подход: человекоцентричность в ИИ-среде</li>
+      </ol>
+      <p class="muted" style="font-size:.9rem">Интенсив с групповой работой и разбором лучших практик. Уходите не с теорией, а с готовыми решениями для своих курсов.</p>
+      <a class="btn grow" style="text-decoration:none" href="https://www.hse.ru/edu/dpo/1190888869" target="_blank" rel="noopener">Подробнее о программе</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="lockup"><img src="data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjgzLjQ3IDI4My40NyIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgaWQ9IkxheWVyXzEiIHhtbDpzcGFjZT0icHJlc2VydmUiIG92ZXJmbG93PSJoaWRkZW4iPjxnPjxjaXJjbGUgY3g9IjE0MS43MyIgY3k9IjE0MS43NCIgcj0iMTQxLjczIiBmaWxsPSIjRkZGRkZGIi8+PGc+PHBhdGggZD0iTTEzNS41OSAxMzMuOTEgMTM1LjAyIDEzMy45MSAxMzUuMDIgMTIzLjI5IDEzNS44IDEyMy4yOUMxNDkuMjkgMTIzLjI5IDE1Ny40OSAxMTUuNTUgMTYxLjE4IDExMC45NSAxNjYuOTcgMTAzLjkxIDE2OC4xNSA5Ny4zOSAxNjguNDQgOTEuODlMMTM1LjI2IDkxLjg5IDEzNS4yNiA4MS40IDE2OC4xIDgxLjRDMTY3LjE0IDc1LjA2IDE2NC42OCA2OS4yNCAxNjEuMTMgNjQuOTUgMTU1LjQgNTcuODMgMTQ3LjA2IDU0LjIzIDEzNi4zMiA1NC4yM0wxMTguMSA1NC4yMiAxMTguMSAyMjMuMDMgMTM1LjI2IDIyMy4wMyAxMzUuMjYgMTU5LjYgMTYwLjI4IDE1OS42IDE2MC4yOCAyMjIuOTYgMTc5LjgzIDIyMi45NiAxNzkuODMgMTk0LjAyQzE3OS44NCAxNTMuMDEgMTY1Ljc4IDEzMy45MSAxMzUuNTkgMTMzLjkxWiIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik0xNjcuNTIgMTI4LjkyQzE3Ni4wMiAxMjUuMTIgMTgxLjI1IDExOS43IDE4NC44OSAxMTUuMzUgMTkzLjE5IDEwNS44NCAxOTQuOTMgOTUuMDUgMTk0LjkzIDg3LjY3IDE5NC45MyA4MS4yNyAxOTMuNDEgNjUuMTkgMTc5LjM2IDU0LjE4IDE3MC4zIDQ3LjE5IDE2Mi4xMyA0My42NCAxNDIuNTkgNDMuNjRMMTMyLjg2IDQzLjY0QzEzMi41NCA0My42MyAxMzIuMjUgNDMuNjMgMTMxLjg3IDQzLjYzTDkxLjA5IDQzLjYzIDkxLjA5IDIzNC41NiAyMDYuOTcgMjM0LjU2IDIwNi45NyAxOTcuNTdDMjA2Ljk3IDE2MC44NCAxOTQuNDMgMTM4Ljk4IDE2Ny41MiAxMjguOTJaTTE3OS44NCAyMjIuOTYgMTYwLjI5IDIyMi45NiAxNjAuMjkgMTU5LjYgMTM1LjI3IDE1OS42IDEzNS4yNyAyMjMuMDMgMTE4LjExIDIyMy4wMyAxMTguMTEgNTQuMjIgMTM2LjMzIDU0LjIzQzE0Ny4wNiA1NC4yMyAxNTUuNDEgNTcuODQgMTYxLjE0IDY0Ljk1IDE2NC42OSA2OS4yNCAxNjcuMTUgNzUuMDYgMTY4LjExIDgxLjRMMTM1LjI3IDgxLjQgMTM1LjI3IDkxLjg5IDE2OC40NSA5MS44OUMxNjguMTYgOTcuMzkgMTY2Ljk4IDEwMy45MSAxNjEuMTkgMTEwLjk1IDE1Ny41IDExNS41NiAxNDkuMyAxMjMuMjkgMTM1LjgxIDEyMy4yOUwxMzUuMDMgMTIzLjI5IDEzNS4wMyAxMzMuOTEgMTM1LjYgMTMzLjkxQzE2NS43OSAxMzMuOTEgMTc5Ljg1IDE1My4wMSAxNzkuODUgMTk0LjAyTDE3OS44NSAyMjIuOTZaIiBmaWxsPSIjMTAyRDY5Ii8+PC9nPjwvZz48L3N2Zz4=" alt="" style="width:36px;height:36px"><span class="bar"></span><span>Институт образования НИУ ВШЭ</span></div>
+    <span>Мастер-класс «Алхимия обучения: сочетание классического педдизайна и нейросетей». Ведущие: М. А. Лытаева, М. А. Давлатова.</span>
+    <span><b>Разработчик страницы:</b> Давлатова Мадина Асатуллоевна</span>
+    <span>Промпты рассчитаны на GigaChat, Алису, DeepSeek, Qwen и другие нейросети. Ответы нейросети нужно проверять: она может уверенно ошибаться.</span>
+  </div>
+</footer>
+</div>
+
+<div id="timer-view" hidden>
+  <p class="eyebrow">Таймер ведущей</p>
+  <div class="t-stage" id="t-stage"></div>
+  <div class="t-digits" id="t-digits">30:00</div>
+  <p class="t-hint" id="t-hint"></p>
+  <div class="t-ctrl">
+    <button class="btn" id="t-start" type="button">Старт</button>
+    <button class="btn ghost" id="t-plus" type="button">+1 мин</button>
+    <button class="btn ghost" id="t-reset" type="button">Сбросить</button>
+  </div>
+  <div class="t-presets" id="t-presets" role="group" aria-label="Этапы"></div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const CONFIG = { chatUrl: "", formUrl: "https://forms.yandex.ru/cloud/6afeb507974ab2002d3b74fe" };
+const SELFCHECK = `Проверь свой последний ответ как строгий эксперт по атрибуции керамики и как методист, работающий по модели 4C/ID.
+1) Что в ответе может быть неточным или придуманным: названия документов, коды, марки, заводы, имена, даты?
+2) Что противоречит опорным фактам из контекста?
+3) Соответствует ли ответ модели 4C/ID: задача из профессиональной жизни, убывающая поддержка, разделение вспомогательной информации и алгоритмов с инструкциями?
+Ответь 3–5 пунктами. Если нужно, дай исправленный фрагмент.`;
+
+const STEPS = [
+  {id:"s0", c:"var(--c-ctx)", num:"0", comp:"Контекст", time:"1 минута", title:"Задаем рамку для всего чата",
+   goal:"Нейросеть получает задачу курса, определение модели 4C/ID и опорные факты по атрибуции. Это снижает риск, что она подменит модель привычной схемой «лекции + тест» или начнет придумывать факты.",
+   prompt:`Ты – опытный педагогический дизайнер и методист программ дополнительного профессионального образования. Мы вместе проектируем фрагмент курса. Запомни контекст и используй его во всех следующих ответах.
+
+Курс: «Атрибуция предметов художественной керамики при подготовке выставки».
+Формат: модуль программы повышения квалификации, 16 академических часов, смешанный (2 очные встречи и онлайн-часы).
+Кто учится: художники, кураторы и организаторы выставок, сотрудники галерей и музеев. Они разбираются в искусстве, но не имеют специальной подготовки в атрибуции керамики.
+Зачем: на выставки попадают предметы из частных коллекций. Ошибка в атрибуции может негативно повлиять на репутацию выставки и организатора.
+
+Модель проектирования – 4C/ID (четырехкомпонентная модель Й. ван Мерриенбура):
+1) Учебные задания – задачи из реальной профессиональной жизни, объединенные в группы от простых к сложным; внутри группы поддержка убывает: пример с комментарием → задание на завершение → задание для самостоятельного выполнения.
+2) Вспомогательная информация – для сложных нерутинных задач: как устроена область, как рассуждает эксперт. Дается до заданий.
+3) Алгоритмы и инструкции – для рутинных задач: пошаговые инструкции и подсказки в момент выполнения.
+4) Практика – отдельная тренировка рутинных навыков до автоматизма.
+
+Опорные факты об атрибуции керамики (опирайся на них и не противоречь им):
+– Атрибуция – определение материала, техники, автора или мастерской, места и времени создания предмета.
+– Признаки рассматривают в совокупности: материал и черепок (фарфор, фаянс, майолика, каменная масса), форма, техника и стиль декора, марка и другие знаки на донце, следы бытования и реставрации, документы о происхождении (провенанс).
+– Марка сама по себе не доказательство: ее могут подделать или нанести позже. Предметы без марки атрибутируют по совокупности признаков.
+– Вывод опирается на сопоставление с эталонами: музейными предметами, каталогами форм, справочниками марок.
+– В сложных случаях нужны технологические исследования и аттестованный эксперт.
+
+Правила: не придумывай названия документов, коды, марки, заводы, имена и даты. Если не уверен, пиши «проверить». Отвечай на русском языке, коротко и списками, без таблиц: мы читаем с телефона.
+
+Сейчас ответь одной фразой: «Контекст принят».`,
+   check:["Нейросеть ответила коротко и не начала сразу проектировать курс","Все дальнейшие шаги идут в этом же чате"]},
+
+  {id:"s1", c:"var(--c-1)", num:"1", comp:"Анализ деятельности", time:"8 минут · делаем вместе с ведущей", title:"От профессии к учебному заданию",
+   goal:"Понять, чему на самом деле учим: какие действия выполняет специалист, какие задачи из реальной профессиональной жизни он решает и какой результат должен показать слушатель.",
+   prompt:`Шаг 1. Анализ профессиональной деятельности.
+1) Назови профессиональные стандарты РФ, на которые можно опереться для этой деятельности, и 2–3 трудовые функции. Если отдельного профстандарта нет, прямо скажи об этом и предложи, на что опереться вместо него. Не придумывай коды: если не уверен, пиши «проверить».
+2) Опиши, как специалист выполняет атрибуцию предмета для выставки: 5–7 последовательных действий.
+3) Сформулируй одну задачу из профессиональной жизни: ситуация, что есть у специалиста на входе, какой результат нужен на выходе.
+4) Сформулируй итоговый образовательный результат по схеме: «Слушатель сможет [действие] в условиях [ситуация] по критериям [признаки качества]».
+
+Формат: заголовки 1)–4), короткие пункты, без таблиц. Не больше 250 слов.`,
+   check:["Профстандарт сверен со справкой или честно помечен «проверить»","Задача из профессиональной жизни заканчивается реальным продуктом (например, атрибуционным описанием), а не «знанием темы»","Результат начинается с действия, а не со слов «знать» или «понимать»","В действиях специалиста есть сопоставление с эталонами и вывод о степени уверенности"],
+   ref:["Верный ответ про профстандарт: отдельного стандарта по атрибуции нет; ближе всего 04.003 «Хранитель музейных ценностей» (функции D/01.6 и D/03.6). Подробнее – в справке ниже.","Если нейросеть уверенно назвала стандарт «Эксперт по атрибуции» с кодом – это выдумка. Зафиксируйте ее для отчета."]},
+
+  {id:"s2", c:"var(--c-2)", num:"2", comp:"Компонент 1 · Учебные задания", time:"10 минут", title:"Группы задач с убывающей поддержкой",
+   goal:"Выстроить путь от простых задач к сложным и превратить первую группу задач в три задания: от примера с комментарием к заданию для самостоятельного выполнения.",
+   prompt:`Шаг 2. Компонент 1 – учебные задания.
+1) Предложи 3 группы задач от простого к сложному для задачи из профессиональной жизни из шага 1. Для каждой группы: что делает задачу сложнее (2–3 фактора сложности) и пример предмета в одном предложении. Примеры описывай типологически (например, «тарелка с подглазурной маркой крупного завода»), без выдуманных названий и марок.
+2) Для группы 1 разработай 3 задания с убывающей поддержкой:
+а) Пример с комментарием: что получает слушатель и какие вопросы к нему задаем.
+б) Задание на завершение: какая часть решения дана, что слушатель доделывает.
+в) Задание для самостоятельного выполнения: ситуация без подсказок.
+Для каждого задания: формулировка для слушателя (2–3 предложения), что слушатель сдает, время в минутах.
+3) В одно задание встрой осмысленную работу слушателя с нейросетью и укажи, что слушатель обязательно делает сам.
+
+Формат: короткие пункты, без таблиц. Не больше 300 слов.`,
+   check:["Группы различаются сложностью ситуации (есть ли марка, есть ли аналоги, противоречат ли признаки), а не объемом теории","Все три задания группы 1 – про один и тот же тип задачи, меняется только степень поддержки","Нейросеть у слушателя играет понятную роль, а вывод и осмотр слушатель делает сам","Нет выдуманных марок и заводов"],
+   ref:["Ориентир по группам: 1 – предмет с маркой известного производителя и аналогами в каталогах; 2 – предмет без марки, атрибуция по форме, декору, черепку; 3 – признаки противоречат друг другу (марка не соответствует форме или декору), нужен вывод о степени уверенности и решение, звать ли эксперта."]},
+
+  {id:"s3", c:"var(--c-3)", num:"3", comp:"Компонент 2 · Вспомогательная информация", time:"8 минут", title:"Как рассуждает эксперт",
+   goal:"Подготовить то, что слушатель должен понять до заданий: модель области, подход эксперта и разобранный кейс.",
+   prompt:`Шаг 3. Компонент 2 – вспомогательная информация. Она дается до заданий и нужна для рассуждения в нерутинных ситуациях.
+1) Ментальная модель: в 5–7 пунктах опиши, как устроена атрибуция – какие группы признаков бывают и как они связаны с выводом.
+2) Систематический подход эксперта: этапы работы и 3–4 эвристики вида «если…, то…» (например, что делать, когда признаки противоречат друг другу).
+3) Разобранный кейс для занятия: короткое описание предмета и ход рассуждения эксперта с выводом и степенью уверенности. Предмет описывай типологически, без выдуманных марок.
+4) Формат подачи на очной встрече и 1 вопрос для обсуждения.
+
+Не больше 300 слов, без таблиц.`,
+   check:["Модель объясняет «почему» и «как думает эксперт», а не перечисляет факты","Есть эвристика для противоречивых признаков","Кейс заканчивается выводом со степенью уверенности, а не категоричным ответом","Информация привязана к заданиям шага 2"],
+   ref:["Сверьте модель со справкой: признаки в совокупности, марка не доказательство, вывод через сопоставление с эталонами."]},
+
+  {id:"s4", c:"var(--c-4)", num:"4", comp:"Компонент 3 · Алгоритмы и инструкции", time:"7 минут", title:"Что подсказать в момент работы",
+   goal:"Сделать короткие опоры для рутинных задач: чек-лист осмотра, шаблон описания и типичные ошибки.",
+   prompt:`Шаг 4. Компонент 3 – алгоритмы и инструкции. Они даются в момент выполнения и нужны для рутинных задач.
+1) Чек-лист осмотра и описания предмета: не больше 10 шагов, каждый шаг – одно действие.
+2) Шаблон атрибуционного описания, который слушатель заполняет по ходу: поля с короткими подсказками.
+3) 3 типичные ошибки новичка и как их избежать.
+4) Когда и в каком виде давать эти материалы слушателю (карточка, памятка в телефоне и т.п.).
+
+Не больше 250 слов, без таблиц.`,
+   check:["Чек-лист короткий и пригоден для работы с предметом в руках","Шаблон описания содержит поле «степень уверенности» и «на чем основан вывод»","Материалы даются во время задания, а не лекцией заранее"],
+   ref:[]},
+
+  {id:"s5", c:"var(--c-5)", num:"5", comp:"Компонент 4 · Практика и оценивание", time:"9 минут", title:"Тренажер и оценивание",
+   goal:"Довести рутинный навык до автоматизма с помощью нейросети-тренажера и решить, как оценивать итоговую работу.",
+   prompt:`Шаг 5. Компонент 4 – практика и оценивание.
+1) Выбери 1 рутинный навык, который нужно довести до автоматизма (например, различение способов нанесения декора или описание марки). Объясни выбор в 1 предложении.
+2) Напиши готовый промпт-тренажер, который слушатель вставит в нейросеть: нейросеть по очереди дает 5 коротких описаний предметов, ждет ответа слушателя, дает обратную связь и в конце подводит итог. Добавь в промпт запрет придумывать реальные марки и заводы.
+3) Рубрика для итогового задания для самостоятельного выполнения: 4 критерия, у каждого 3 уровня, каждый уровень в одну строку.
+4) Как сделать итоговое задание устойчивым к ИИ: что слушатель делает сам и как это проверить.
+
+Не больше 300 слов, без таблиц.`,
+   check:["Тренажер отрабатывает один рутинный навык, а не всю атрибуцию","Промпт-тренажер можно сразу вставить в новый чат и он работает (попробуйте!)","Критерии рубрики наблюдаемы в работе слушателя","Устойчивость к ИИ строится на осмотре реального предмета и устной защите, а не на запрете"],
+   ref:["Если успеваете: откройте новый чат, вставьте промпт-тренажер и пройдите 1–2 упражнения в роли слушателя.","Обсудите ограничение: текстовый тренажер тренирует термины и логику описания, но не зрительное различение. Для него нужны фотографии или реальные предметы."]},
+
+  {id:"s6", c:"var(--c-6)", num:"6", comp:"Итог", time:"4 минуты", title:"Отчет фрагмента курса",
+   goal:"Собрать результат на одном экране, дописать найденные ошибки ИИ и загрузить в Яндекс форму.",
+   prompt:`Шаг 6. Собери результаты в отчет фрагмента курса. Строго по пунктам, не больше 180 слов, без таблиц:
+Название фрагмента:
+Для кого:
+Задача из профессиональной жизни:
+Итоговый образовательный результат:
+Группы задач (3 строки):
+Задания группы 1 (3 строки):
+Вспомогательная информация (1 строка):
+Алгоритмы и инструкции (1 строка):
+Практика (1 строка):
+Как оцениваем (1 строка):
+Ошибки ИИ, которые мы нашли и исправили: (оставь пустым, мы заполним сами)`,
+   check:["Спикер вписал реальные ошибки, которые нашла команда","В отчете указана нейросеть, с которой работали","Отчет отправлен в Яндекс форму с номером команды"],
+   ref:[]}
+];
+
+const FIXES = [
+  ["Ответ слишком длинный","Сократи ответ до 120 слов. Оставь только главное."],
+  ["Таблица не помещается на экране","Перепиши ответ списком, без таблиц."],
+  ["Нейросеть «забыла» задачу или модель","Напоминаю: мы проектируем модуль курса «Атрибуция предметов художественной керамики при подготовке выставки» по модели 4C/ID. Продолжи с шага [номер]."],
+  ["Слишком общо","Сделай конкретнее: опиши ситуацию так, как она выглядит в реальной работе куратора выставки."],
+  ["Нейросеть придумала марку, завод или документ","Убери из ответа все конкретные названия марок, заводов и документов, которые ты не можешь подтвердить. Замени их типологическим описанием."],
+  ["Чат завис или уперся в лимит","Откройте новый чат, вставьте промпт шага 0, затем промпт нужного шага."]
+];
+
+const BONUS = [
+  ["Образовательные результаты с учетом ИИ","Ты – педагогический дизайнер. Вот образовательный результат моего курса: [вставьте]. Переформулируй его с учетом того, что у слушателей есть доступ к нейросетям: что остается за человеком, что можно делегировать ИИ, как проверить, что результат достигнут человеком. Дай 3 варианта формулировки."],
+  ["Вовлечение на лекции","Вот план моей лекции: [вставьте]. Предложи 4 точки вовлечения через каждые 10–15 минут: вопрос, мини-задача в парах, голосование, задание с нейросетью на 3 минуты. Для каждой – точная формулировка и время."],
+  ["Самостоятельная и проектная работа","Помоги спроектировать самостоятельную работу по теме [тема] для [кто учится]. Нужны контрольные точки, роли в команде, правила использования ИИ и результат на каждом этапе, который нельзя просто сгенерировать."],
+  ["Формирующее оценивание","Для задания [вставьте] предложи 3 формата формирующего оценивания (самопроверка, взаимооценка, проверка с ИИ) с короткими инструкциями для слушателей и критериями."],
+  ["Развивающая обратная связь","Вот работа слушателя: [вставьте] и критерии: [вставьте]. Дай развивающую обратную связь по схеме «что получилось → что улучшить → следующий шаг». Тон доброжелательный и конкретный, не больше 120 слов. Не исправляй работу за слушателя."]
+];
+
+const $ = s=>document.querySelector(s);
+function esc(s){return s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))}
+
+const $$=s=>[...document.querySelectorAll(s)];
+const NAVN={s0:"Контекст",s1:"Анализ",s2:"Задания",s3:"Вспомогательная",s4:"Алгоритмы",s5:"Практика",s6:"Отчет"};
+
+const AIS=[["GigaChat","https://giga.chat/"],["Алиса","https://alice.yandex.ru/"],["DeepSeek","https://chat.deepseek.com/"],["Qwen","https://chat.qwen.ai/"],["Другая",""]];
+const ROLES=[["operator","Оператор","Ведет чат с нейросетью: вставляет промпты, весь путь в одном чате."],
+ ["checker","Проверяющий","Ищет ошибки ИИ: сверяет со справкой, запускает самопроверку, записывает ошибки."],
+ ["method","Методист","Сверяет ответы с моделью 4C/ID по чек-листу под каждым шагом."],
+ ["speaker","Спикер","Фиксирует решения команды, собирает отчет, выступает."],
+ ["timekeeper","Модератор","Организует работу команды: следит за таймером наверху страницы и переводит к следующему шагу."]];
+const QUIZ=[["Чек-лист осмотра донца предмета","P"],["Разбор кейса: как эксперт рассуждал о противоречивых признаках","S"],["Шаблон атрибуционного описания","P"],["Лонгрид о том, как связаны признаки и вывод","S"],["Подсказка «как сфотографировать марку» прямо в задании","P"],["Эвристики эксперта: что делать, если нет аналогов","S"]];
+
+function store(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+function load(k){try{return localStorage.getItem(k)}catch(e){return null}}
+const st=(()=>{try{return JSON.parse(load("pk4c")||"{}")}catch(e){return {}}})();
+st.done=st.done||{}; st.err=st.err||{}; st.ck=st.ck||{}; st.quiz=st.quiz||{};
+function save(){store("pk4c",JSON.stringify(st))}
+
+/* nav */
+$("#nav").innerHTML=[["task","Задание"],["team","Команда"],["roles","Роли"]].map(([h,t])=>`<a href="#${h}">${t}</a>`).join("")+
+  STEPS.map(s=>`<a href="#${s.id}" data-step="${s.id}">${s.num} · ${NAVN[s.id]}</a>`).join("")+
+  [["report","Отчет"],["facts","Справка"],["model","4C/ID"],["fix","Исправления"],["lit","Литература"],["take","Унести с собой"]].map(([h,t])=>`<a href="#${h}">${t}</a>`).join("");
+
+/* steps */
+$("#steps").innerHTML=STEPS.map(s=>`
+<section id="${s.id}">
+  <article class="step" style="--c:${s.id==="s0"?"#55607A":s.id==="s6"?"#102D69":"#1658DA"}">
+    <header><span class="num">${s.num}</span><div><div class="comp">${s.comp}</div><h3>${s.title}</h3></div></header>
+    <div class="body">
+      <p>${s.goal}</p>
+      <div class="who" data-r="operator">Оператор: скопируйте и вставьте в нейросеть</div>
+      <div class="prompt"><pre id="pre-${s.id}">${esc(s.prompt)}</pre>
+        <div class="bar"><button class="btn grow" type="button" data-copy="${s.id}">Скопировать промпт</button><button class="btn ghost" type="button" data-expand="1" aria-expanded="false">Развернуть</button></div></div>
+      ${["s1","s2","s3","s4","s5"].includes(s.id)?`<details class="more"><summary data-r="checker">Проверяющий: самопроверка нейросети</summary><div class="inner">
+        <p>Запустите сразу после ответа. Параллельно сверьте ответ со справкой.</p>
+        <div class="prompt"><pre>${esc(SELFCHECK)}</pre><div class="bar"><button class="btn grow" type="button" data-copysk="1">Скопировать самопроверку</button></div></div>
+        ${s.ref&&s.ref.length?`<ul>${s.ref.map(r=>`<li>${r}</li>`).join("")}</ul>`:""}</div></details>
+      <div class="errlog"><label for="err-${s.id}" data-r="checker">Что выдал ИИ (правильно/неправильно)? Вставьте в это поле то, что планируете использовать</label><textarea id="err-${s.id}" data-err="${s.id}" class="big" maxlength="60000" placeholder="Вставьте ответ нейросети или его часть и отметьте, что верно, а что нет"></textarea><span class="muted wc" data-wc="${s.id}" style="font-size:.78rem"></span></div>`:""}
+      ${s.id==="s6"?`<div class="card" style="background:var(--mist);border:0"><div class="who" data-r="speaker">Спикер: отправьте отчет</div>
+        <p style="font-size:.9rem">Промпт ниже уже содержит номер команды и нейросеть. Строку с ошибками ИИ допишите сами. Скопируйте ответ нейросети (долгое нажатие → «Копировать») Затем сохраните или скопируйте <a href="#report">отчет команды</a> и загрузите его в Яндекс форму.</p>
+        <a class="btn" id="chat-link" style="text-decoration:none" href="#" target="_blank" rel="noopener" hidden>Открыть Яндекс форму</a>
+        <p class="muted" id="chat-hint" style="font-size:.85rem">Ссылку на Яндекс форму ведущие покажут на экране.</p></div>`:""}
+      <div class="who" data-r="method">Методист: что проверить</div>
+      <ul class="check">${s.check.map((c,j)=>`<li><input type="checkbox" id="ck-${s.id}-${j}"><label for="ck-${s.id}-${j}">${c}</label></li>`).join("")}</ul>
+      <button class="btn okbtn" type="button" data-done="${s.id}">Шаг выполнен</button>
+    </div>
+  </article>
+</section>`).join("");
+
+/* passport prompt with team data and errors */
+function passportPrompt(){
+  const base=STEPS.find(s=>s.id==="s6").prompt;
+  let p=base;
+  const head=[st.team?`Команда № ${st.team}`:"",st.ai?`Нейросеть: ${st.ai}`:""].filter(Boolean).join(". ");
+  return head?p+`\n\nДобавь первой строкой отчета: «${head}».`:p;
+}
+function renderPassport(){$("#pre-s6").textContent=passportPrompt();renderReport()}
+function buildReport(){
+  const L=[`Отчет команды № ${st.team||"?"} · нейросеть: ${st.ai||"не выбрана"}`];
+  const dn=STEPS.filter(s=>st.done[s.id]);
+  L.push(`Шаги выполнены: ${dn.length} из ${STEPS.length}`+(dn.length?` (${dn.map(s=>s.num).join(", ")})`:""));
+  STEPS.forEach(s=>{const tot=s.check.length,got=s.check.filter((_,j)=>st.ck[`ck-${s.id}-${j}`]).length,e=(st.err[s.id]||"").trim();
+    if(got||e||st.done[s.id])L.push(`Шаг ${s.num}: чек-лист методиста ${got}/${tot}`+(e?`; что выдал ИИ: ${e}`:""))});
+  const q=Object.keys(st.quiz);if(q.length)L.push(`Мини-тест 4C/ID: верно ${q.filter(k=>st.quiz[k]).length} из ${q.length}`);
+  return L.join("\n");
+}
+function renderReport(){$("#report-pre").textContent=buildReport()}
+(()=>{const y=document.getElementById("yform");if(!y)return;if(CONFIG.formUrl)y.href=CONFIG.formUrl;else y.addEventListener("click",e=>{e.preventDefault();toast("Ссылку на форму ведущие покажут на экране")})})();
+function buildFile(){
+  const d=new Date(),ds=d.toLocaleDateString("ru-RU");
+  const parts=["Мастер-класс «Алхимия обучения: сочетание классического педдизайна и нейросетей»","Институт образования НИУ ВШЭ · "+ds,"","ОТЧЕТ КОМАНДЫ",buildReport(),""];
+  parts.push("ПРОМПТЫ ПРАКТИКУМА");
+  STEPS.forEach(s=>{parts.push("","Шаг "+s.num+". "+s.title,s.id==="s6"?passportPrompt():s.prompt)});
+  parts.push("","Самопроверка нейросети",SELFCHECK,"","Страница практикума: "+location.href.split("#")[0],"Разработчик страницы: Давлатова Мадина Асатуллоевна");
+  return parts.join("\n");
+}
+$("#dl").addEventListener("click",()=>{
+  try{const blob=new Blob([buildFile()],{type:"text/plain;charset=utf-8"});const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");a.href=url;a.download="praktikum-4cid-komanda-"+(st.team||"X")+".txt";document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),2000);toast("Файл сохранен в загрузки")}
+  catch(e){toast("Не удалось сохранить: скопируйте отчет")}
+});
+
+/* fixes, bonus, quiz */
+$("#fixes").innerHTML=FIXES.map(([p,s],i)=>`<div class="row"><b>${p}</b><code>${esc(s)}</code><button class="btn ghost" type="button" data-copyfix="${i}">Скопировать</button></div>`).join("");
+$("#bonus").innerHTML=BONUS.map(([t,p],i)=>`<div class="prompt"><pre style="max-height:none">${esc(p)}</pre><div class="bar"><span style="flex:1 1 140px;font-weight:700;font-size:.88rem;align-self:center;color:var(--ink)">${t}</span><button class="btn" type="button" data-copybonus="${i}">Скопировать</button></div></div>`).join("");
+$("#quiz").innerHTML=QUIZ.map(([t],i)=>`<div class="qi" data-i="${i}"><span>${t}</span><div class="opts"><button type="button" data-a="S">Вспомогательная</button><button type="button" data-a="P">Алгоритмы и инструкции</button></div><span class="fb"></span></div>`).join("");
+$("#quiz").addEventListener("click",e=>{const b=e.target.closest("[data-a]");if(!b)return;const row=b.closest(".qi"),ok=b.dataset.a===QUIZ[+row.dataset.i][1];st.quiz[row.dataset.i]=ok;save();renderReport();row.classList.remove("ok","no");row.classList.add(ok?"ok":"no");row.querySelector(".fb").textContent=ok?"Верно":(QUIZ[+row.dataset.i][1]==="S"?"Это вспомогательная информация: она нужна для рассуждения":"Это алгоритмы и инструкции: она нужна в момент действия")});
+
+/* team: number, AI, roles */
+$("#ais").innerHTML=AIS.map(([n])=>`<button type="button" class="chip" aria-pressed="false" data-ai="${n}">${n}</button>`).join("");
+function renderTeam(){
+  $("#teamno").value=st.team||"";
+  $$("#ais .chip").forEach(c=>c.setAttribute("aria-pressed",String(c.dataset.ai===st.ai)));
+  const a=AIS.find(x=>x[0]===st.ai), o=$("#openai");
+  if(a&&a[1]){o.innerHTML=`<a href="${a[1]}" target="_blank" rel="noopener">Открыть ${a[0]} →</a>`;o.classList.add("on")}else o.classList.remove("on");
+  renderPassport();
+}
+$("#teamno").addEventListener("input",e=>{st.team=e.target.value.trim();save();renderPassport()});
+$("#ais").addEventListener("click",e=>{const c=e.target.closest(".chip");if(!c)return;st.ai=c.dataset.ai;save();renderTeam()});
+$("#rolelist").innerHTML=ROLES.map(([id,n,d])=>`<button type="button" class="role" aria-pressed="false" data-role="${id}"><span class="me">Моя роль</span><b>${n}</b><p>${d}</p></button>`).join("");
+function renderRole(){$$(".role").forEach(r=>r.setAttribute("aria-pressed",String(r.dataset.role===st.role)));
+  $$("[data-r]").forEach(el=>{const me=el.dataset.r===st.role;el.style.color=me?"var(--blue)":"";el.style.fontWeight=me?"800":""})}
+$("#rolelist").addEventListener("click",e=>{const r=e.target.closest(".role");if(!r)return;st.role=st.role===r.dataset.role?"":r.dataset.role;save();renderRole();if(st.role==="timekeeper")toast("Таймер команды – справа вверху")});
+
+/* progress */
+function renderProgress(){const n=STEPS.filter(s=>st.done[s.id]).length;$("#progtxt").textContent=`${n} из ${STEPS.length} шагов`;$("#progbar").style.width=(n/STEPS.length*100)+"%";
+  STEPS.forEach(s=>{const done=!!st.done[s.id];$("#"+s.id+" .step").classList.toggle("done",done);const b=$(`[data-done="${s.id}"]`);b.textContent=done?"Шаг выполнен ✓":"Шаг выполнен";const a=$(`#nav [data-step="${s.id}"]`);a&&a.classList.toggle("done",done)});renderReport()}
+
+/* errors */
+$$(".check input").forEach(c=>{c.checked=!!st.ck[c.id];c.addEventListener("change",()=>{st.ck[c.id]=c.checked;save();renderReport()})});
+const wc=t=>{const n=(t.value.trim().match(/\S+/g)||[]).length,o=document.querySelector(`[data-wc="${t.dataset.err}"]`);if(o)o.textContent=n?`Слов: ${n}`:""};
+$$("[data-err]").forEach(t=>{t.value=st.err[t.dataset.err]||"";wc(t);t.addEventListener("input",()=>{st.err[t.dataset.err]=t.value;wc(t);save();renderPassport()})});
+
+/* copy & clicks */
+function selectEl(el){try{const r=document.createRange();r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r)}catch(e){}}
+document.addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  if(b.dataset.expand){const box=b.closest(".prompt");const o=box.classList.toggle("open");b.textContent=o?"Свернуть":"Развернуть";b.setAttribute("aria-expanded",String(o));return}
+  if(b.dataset.done){const id=b.dataset.done;st.done[id]=!st.done[id];save();renderProgress();if(st.done[id]){const i=STEPS.findIndex(s=>s.id===id);const nx=STEPS[i+1];toast(nx?`Отлично! Дальше – шаг ${nx.num}`:"Все шаги пройдены!");if(nx)setTimeout(()=>$("#"+nx.id).scrollIntoView(),500)}return}
+  let txt=null,pre=null;
+  if(b.dataset.copy){txt=b.dataset.copy==="s6"?passportPrompt():STEPS.find(s=>s.id===b.dataset.copy).prompt;pre=$("#pre-"+b.dataset.copy)}
+  else if(b.dataset.copysk){txt=SELFCHECK;pre=b.closest(".prompt").querySelector("pre")}
+  else if(b.dataset.copyfix!==undefined){txt=FIXES[+b.dataset.copyfix][1];pre=b.closest(".row").querySelector("code")}
+  else if(b.dataset.copyreport){txt=buildReport();pre=$("#report-pre")}
+  else if(b.dataset.copybonus!==undefined){txt=BONUS[+b.dataset.copybonus][1];pre=b.closest(".prompt").querySelector("pre")}
+  if(txt===null) return;
+  const ok=()=>{const old=b.textContent;b.classList.add("done");b.textContent="Скопировано ✓";toast("Скопировано. Вставьте в нейросеть");setTimeout(()=>{b.textContent=old;b.classList.remove("done")},1800)};
+  const fail=()=>{selectEl(pre);toast("Текст выделен: нажмите «Копировать»")};
+  try{navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(txt).then(ok,fail):fail()}catch(err){fail()}
+});
+let tt;function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("show"),2200)}
+if(CONFIG.formUrl||CONFIG.chatUrl){const a=$("#chat-link");a.href=CONFIG.formUrl||CONFIG.chatUrl;a.hidden=false;$("#chat-hint").hidden=true}
+
+/* team mini timer */
+let mTot=1800,mLeft=1800,mRun=false,mInt=null;
+function mFmt(s){const n=s<0;s=Math.abs(s);return(n?"−":"")+String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
+function mShow(){$("#minit").textContent=mFmt(mLeft);const m=$("#mini");m.classList.toggle("run",mRun&&mLeft>60);m.classList.toggle("low",mLeft<=60)}
+function mStart(sec){clearInterval(mInt);mTot=mLeft=sec;mRun=true;mInt=setInterval(()=>{mLeft--;mShow();if(mLeft===0){toast("Время вышло");try{navigator.vibrate&&navigator.vibrate(400)}catch(e){}}},1000);mShow()}
+$("#mini").addEventListener("click",()=>{if(!mRun&&mLeft===mTot){mStart(1800);toast("Таймер команды: 30 минут")}else{mRun=!mRun;clearInterval(mInt);if(mRun)mInt=setInterval(()=>{mLeft--;mShow()},1000);toast(mRun?"Таймер продолжен":"Таймер на паузе")}mShow()});
+$("#grp1").addEventListener("click",()=>{mStart(60);toast("1 минута на распределение по группам")});
+
+/* host timer (#timer) */
+const STAGES=[{n:"Распределение по группам",m:1,h:"Объединитесь в команды по 4–6 человек и выберите роли"},{n:"Работа в командах",m:30,h:"Семь шагов в одном чате: от контекста до отчета фрагмента"}];
+let tIdx=1,tLeft=1800,tRun=false,tInt=null;
+function tShow(){const s=STAGES[tIdx];$("#t-stage").textContent=s.n;$("#t-hint").textContent=s.h;$("#t-digits").textContent=mFmt(tLeft);$("#t-digits").classList.toggle("over",tLeft<0);$$("#t-presets .btn").forEach((b,i)=>b.setAttribute("aria-pressed",String(i===tIdx)));$("#t-start").textContent=tRun?"Пауза":"Старт"}
+$("#t-presets").innerHTML=STAGES.map((s,i)=>`<button class="btn" type="button" data-st="${i}">${s.n} · ${s.m} мин</button>`).join("");
+$("#t-presets").addEventListener("click",e=>{const b=e.target.closest("[data-st]");if(!b)return;tIdx=+b.dataset.st;tLeft=STAGES[tIdx].m*60;tRun=false;clearInterval(tInt);tShow()});
+$("#t-start").addEventListener("click",()=>{tRun=!tRun;clearInterval(tInt);if(tRun)tInt=setInterval(()=>{tLeft--;tShow()},1000);tShow()});
+$("#t-plus").addEventListener("click",()=>{tLeft+=60;tShow()});
+$("#t-reset").addEventListener("click",()=>{tLeft=STAGES[tIdx].m*60;tRun=false;clearInterval(tInt);tShow()});
+function route(){const t=location.hash==="#timer";$("#timer-view").hidden=!t;$("#main-view").hidden=t;if(t)tShow()}
+addEventListener("hashchange",route);route();
+
+renderTeam();renderRole();renderProgress();
+</script>
+
+</body>
+</html>
